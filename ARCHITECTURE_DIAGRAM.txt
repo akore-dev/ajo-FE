@@ -1,0 +1,390 @@
+╔════════════════════════════════════════════════════════════════════════════════════╗
+║                 AJO APP - COMPLETE ARCHITECTURE DIAGRAM                             ║
+╚════════════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│  BROWSER / NEXT.JS APP                                                              │
+├─────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                     │
+│  ┌──────────────────────────────────────────────────────────────────────────────┐  │
+│  │  COMPONENTS LAYER (Your React Components)                                   │  │
+│  │                                                                              │  │
+│  │  ┌─────────────────┐  ┌──────────────────┐  ┌─────────────────────────┐   │  │
+│  │  │  SignInScreen   │  │  CirclesScreen   │  │  WalletScreen           │   │  │
+│  │  │                 │  │                  │  │                         │   │  │
+│  │  │ Uses:           │  │ Uses:            │  │ Uses:                   │   │  │
+│  │  │ useLoginMutation│  │ useMyCircles     │  │ useWalletSummary        │   │  │
+│  │  │                 │  │ useCircleDetail  │  │ useWalletTransactions   │   │  │
+│  │  └────────┬────────┘  └────────┬─────────┘  └────────────┬────────────┘   │  │
+│  │           │                    │                         │                 │  │
+│  │           └────────────────────┼─────────────────────────┘                 │  │
+│  │                                │                                           │  │
+│  └────────────────────────────────┼───────────────────────────────────────────┘  │
+│                                   │                                               │
+│                                   ▼                                               │
+│  ┌──────────────────────────────────────────────────────────────────────────────┐  │
+│  │  HOOKS LAYER (src/hooks/)                                                   │  │
+│  │                                                                              │  │
+│  │  useAuth()                useMyCircles()              useWalletSummary()    │  │
+│  │  useLoginMutation()       useCircleDetail()          useWalletBalance()    │  │
+│  │  useRegisterMutation()    useJoinCircleMutation()    useWalletTransactions()│  │
+│  │  useLogoutMutation()      useCreateCircleMutation()  useFundWalletMutation()│  │
+│  │                           useContributeMutation()    useVerifyFunding...()  │  │
+│  │                                                                              │  │
+│  │  ▼ Subscribe to store & return data + methods ▼                             │  │
+│  └──────────────────────────────────────────────────────────────────────────────┘  │
+│                                   │                                               │
+│                                   ▼                                               │
+│  ┌──────────────────────────────────────────────────────────────────────────────┐  │
+│  │  STATE MANAGEMENT LAYER (src/store/ - Zustand)                              │  │
+│  │                                                                              │  │
+│  │  ┌──────────────────┐  ┌──────────────────┐  ┌────────────────────────────┐ │  │
+│  │  │  AUTH STORE      │  │ CIRCLES STORE    │  │ WALLET STORE              │ │  │
+│  │  │                  │  │                  │  │                            │ │  │
+│  │  │ State:           │  │ State:           │  │ State:                     │ │  │
+│  │  │ - user           │  │ - myCircles[]    │  │ - summary                  │ │  │
+│  │  │ - token          │  │ - selectedCircle │  │ - transactions[]           │ │  │
+│  │  │ - isLoading      │  │ - isLoading      │  │ - isLoading                │ │  │
+│  │  │ - error          │  │ - error          │  │ - error                    │ │  │
+│  │  │                  │  │                  │  │                            │ │  │
+│  │  │ Actions:         │  │ Actions:         │  │ Actions:                   │ │  │
+│  │  │ - login()        │  │ - fetchMyCircles │  │ - fetchSummary()           │ │  │
+│  │  │ - register()     │  │ - createCircle() │  │ - fetchTransactions()      │ │  │
+│  │  │ - logout()       │  │ - joinCircle()   │  │ - fundWallet()             │ │  │
+│  │  │ - refreshUser()  │  │ - contribute()   │  │ - verifyFunding()          │ │  │
+│  │  │                  │  │ - leaveCircle()  │  │ - getBalance()             │ │  │
+│  │  │ Persists to      │  │                  │  │                            │ │  │
+│  │  │ localStorage ✓   │  │ In-memory only   │  │ In-memory only             │ │  │
+│  │  └────────┬─────────┘  └────────┬─────────┘  └────────────┬───────────────┘ │  │
+│  │           │                    │                         │                  │  │
+│  │           └────────────────────┼─────────────────────────┘                  │  │
+│  │                                │                                            │  │
+│  └────────────────────────────────┼────────────────────────────────────────────┘  │
+│                                   │                                               │
+│                                   ▼                                               │
+│  ┌──────────────────────────────────────────────────────────────────────────────┐  │
+│  │  API MODULES LAYER (src/api/)                                               │  │
+│  │                                                                              │  │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │  │
+│  │  │  authAPI     │  │  circlesAPI  │  │  walletAPI   │  │  apiClient   │   │  │
+│  │  │              │  │              │  │              │  │              │   │  │
+│  │  │ - login()    │  │ - list()     │  │ - getSummary │  │ Core HTTP    │   │  │
+│  │  │ - register() │  │ - create()   │  │ - fund()     │  │              │   │  │
+│  │  │ - logout()   │  │ - join()     │  │ - getTransact│  │ Features:    │   │  │
+│  │  │ - getUser()  │  │ - leave()    │  │ - verifyFund │  │ ✓ Token mgmt │   │  │
+│  │  │ - changePass │  │ - contribute │  │ - getBalance │  │ ✓ Interceptors
+│  │  │              │  │ - getPayout  │  │              │  │ ✓ Error handle│   │  │
+│  │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  │ ✓ Token refresh
+│  │         │                 │                 │          │ ✓ Request queueing │  │
+│  │         └─────────────────┼─────────────────┘          │ ✓ Auth headers    │  │
+│  │                           │                           │ ✓ Error transform │  │
+│  │                           ▼                           └──────┬────────────┘   │  │
+│  │                      All calls go through apiClient         │              │  │
+│  │                                                             │              │  │
+│  └─────────────────────────────────────────────────────────────┼──────────────┘  │
+│                                                               │                  │
+└───────────────────────────────────────────────────────────────┼──────────────────┘
+                                                                │
+                                                                ▼
+                                    ┌─────────────────────────────────────────┐
+                                    │  NETWORK / HTTP                         │
+                                    │                                         │
+                                    │  POST /api/auth/login                   │
+                                    │  GET  /api/circles/my-circles           │
+                                    │  POST /api/circles/contribute           │
+                                    │  GET  /api/wallet/transactions          │
+                                    │  POST /api/wallet/fund                  │
+                                    │  ...etc                                 │
+                                    │                                         │
+                                    │  All with: Authorization: Bearer <token>│
+                                    └──────────────┬──────────────────────────┘
+                                                   │
+                                                   ▼
+                                    ┌─────────────────────────────────────────┐
+                                    │  BACKEND API                            │
+                                    │  Node.js / Express                      │
+                                    │                                         │
+                                    │  Routes, Controllers, Services          │
+                                    │  Database: PostgreSQL / MongoDB         │
+                                    │  Cache: Redis                           │
+                                    │                                         │
+                                    │  Returns: { success, data, error }      │
+                                    └─────────────────────────────────────────┘
+
+
+╔════════════════════════════════════════════════════════════════════════════════════╗
+║                             DATA FLOW EXAMPLE                                      ║
+║                      User logs in and views circles                                ║
+╚════════════════════════════════════════════════════════════════════════════════════╝
+
+1. Component renders SignInScreen
+   │
+   ▼
+2. Component calls useLoginMutation()
+   │
+   ▼
+3. User fills form and clicks Login
+   │
+   ▼
+4. Component calls mutate({ email, password })
+   │
+   ▼
+5. Hook calls store.login()
+   │
+   ├─ Set isLoading = true
+   ├─ Set error = null
+   │
+   ▼
+6. Store calls authAPI.login()
+   │
+   ▼
+7. API module calls apiClient.post()
+   │
+   ├─ Adds Authorization header (if exists)
+   ├─ Serializes body to JSON
+   │
+   ▼
+8. HTTP client makes POST request
+   │
+   ▼
+9. Backend processes login
+   │
+   ▼
+10. Backend returns { success: true, data: { user, token } }
+    │
+    ▼
+11. HTTP client parses response
+    │
+    ├─ Check if response.ok
+    ├─ Parse JSON
+    ├─ Unwrap ApiResponse wrapper
+    ├─ Return typed data
+    │
+    ▼
+12. Store receives AuthResponse
+    │
+    ├─ Call apiClient.setAuthToken(token)
+    ├─ Set user = response.user
+    ├─ Set token = response.token
+    ├─ Set isLoading = false
+    │
+    ▼
+13. Hook returns new state
+    │
+    ├─ user = authenticated user object
+    ├─ token = JWT token
+    ├─ isLoading = false
+    ├─ error = null
+    │
+    ▼
+14. Component re-renders with new data
+    │
+    ├─ Hide login form
+    ├─ Show dashboard (via router)
+    │
+    ▼
+15. User navigates to Circles
+    │
+    ▼
+16. Component calls useMyCircles()
+    │
+    ├─ useEffect triggers on mount
+    ├─ Calls store.fetchMyCircles()
+    │
+    ▼
+17. Store calls circlesAPI.myCircles()
+    │
+    ▼
+18. API client makes GET /api/circles/my-circles
+    │
+    ├─ Adds Authorization header with stored token ✓
+    │
+    ▼
+19. Backend returns circles data
+    │
+    ▼
+20. Store updates myCircles.items with data
+    │
+    ▼
+21. Hook returns circles array
+    │
+    ▼
+22. Component renders circle list
+    │
+    └─ Done! ✓
+
+
+╔════════════════════════════════════════════════════════════════════════════════════╗
+║                        ERROR HANDLING FLOW                                         ║
+╚════════════════════════════════════════════════════════════════════════════════════╝
+
+Backend returns error (e.g., 401 Unauthorized)
+│
+▼
+HTTP client catches response.ok = false
+│
+├─ Parse error details
+├─ Throw APIException(code, statusCode, details, message)
+│
+▼
+If status = 401:
+├─ Attempt token refresh (GET /api/auth/refresh)
+├─ If refresh succeeds: Retry original request with new token
+├─ If refresh fails: Clear tokens, throw APIException
+│
+▼
+Store's action catches APIException
+│
+├─ Set error = message (user-friendly)
+├─ Set isLoading = false
+├─ Store error in state
+│
+▼
+Hook returns error
+│
+├─ error = "Invalid email or password"
+├─ isLoading = false
+│
+▼
+Component receives error
+│
+├─ Shows error message in UI
+├─ User can retry
+│
+└─ Handled gracefully! ✓
+
+
+╔════════════════════════════════════════════════════════════════════════════════════╗
+║                      HOOK SUBSCRIPTION PATTERN                                    ║
+╚════════════════════════════════════════════════════════════════════════════════════╝
+
+Multiple components can use same hook:
+
+┌──────────────────┐      ┌──────────────────┐      ┌──────────────────┐
+│  Component 1     │      │  Component 2     │      │  Component 3     │
+│                  │      │                  │      │                  │
+│ useMyCircles()   │      │ useMyCircles()   │      │ useMyCircles()   │
+└────────┬─────────┘      └────────┬─────────┘      └────────┬─────────┘
+         │                         │                         │
+         └─────────────────────────┼─────────────────────────┘
+                                   │
+                                   ▼
+                         ┌────────────────────────┐
+                         │ useCirclesStore hook   │
+                         │ (Zustand subscriber)   │
+                         └────────┬───────────────┘
+                                   │
+                                   ▼
+                         ┌────────────────────────┐
+                         │ useCirclesStore state  │
+                         │ (Single source truth)  │
+                         │                        │
+                         │ myCircles: []          │
+                         │ isLoading: false       │
+                         │ error: null            │
+                         └────────────────────────┘
+
+✓ One store, many subscribers
+✓ All components see same data
+✓ Efficient updates (only changed subscribers re-render)
+✓ No prop drilling needed
+
+
+╔════════════════════════════════════════════════════════════════════════════════════╗
+║                          TYPE SAFETY FLOW                                          ║
+╚════════════════════════════════════════════════════════════════════════════════════╝
+
+API Request:
+  circlesAPI.create(data: CreateCircleRequest)
+                          ↓ TypeScript checks type ↓
+  data must have:
+  - name: string
+  - category: "family" | "friends" | "community" | "other"
+  - capacity: number
+  - contributionAmount: number
+  - cadence: "weekly" | "monthly"
+  - totalCycles: number
+
+  ✓ Compile-time type checking
+  ✓ IDE autocomplete
+  ✗ Wrong fields = TypeScript error
+
+API Response:
+  circlesAPI.create() returns Promise<Circle>
+                                      ↓
+  response typed as Circle:
+  - id: string
+  - name: string
+  - category: CircleCategory
+  - members: CircleMember[]
+  - etc...
+
+  ✓ Response type guaranteed
+  ✓ IDE knows all available fields
+  ✓ Accessing wrong field = TypeScript error
+
+Store State:
+  const circles = useCirclesStore(s => s.myCircles.items)
+                                                    ↓
+  circles: Circle[]
+  ✓ TypeScript knows it's an array of Circle
+  ✓ Can access circle.name, circle.status, etc.
+  ✓ Cannot access non-existent properties
+
+  ✗ This causes error:
+    circle.invalidField  // ← TypeScript catches this!
+
+
+╔════════════════════════════════════════════════════════════════════════════════════╗
+║                    PERSISTENCE (localStorage)                                      ║
+╚════════════════════════════════════════════════════════════════════════════════════╝
+
+App Lifecycle:
+
+1. User visits for first time
+   │
+   ├─ localStorage is empty
+   ├─ Providers.tsx runs useAuth().restoreSession()
+   ├─ No token found, user stays logged out
+   │
+   ▼
+2. User logs in
+   │
+   ├─ API returns { user, token }
+   ├─ Store calls apiClient.setAuthToken(token)
+   ├─ Auth store persists to localStorage:
+   │  └─ localStorage["auth-store"] = { user, token }
+   │
+   ▼
+3. User closes browser and comes back later
+   │
+   ├─ App loads, Providers.tsx runs
+   ├─ useAuth().restoreSession() called
+   ├─ Auth store hydrated from localStorage
+   ├─ User state restored automatically
+   ├─ Token still in storage
+   ├─ User stays logged in ✓
+   │
+   ▼
+4. User clicks logout
+   │
+   ├─ Store calls logout()
+   ├─ API call to /api/auth/logout
+   ├─ localStorage cleared
+   ├─ User logged out
+   │
+   ├─ User logs back in → back to step 2
+   │
+   └─ Seamless experience! ✓
+
+
+═══════════════════════════════════════════════════════════════════════════════════════
+
+Legend:
+  ✓ = Implemented & working
+  ✗ = Would be an error
+  → = Flow arrow
+  ├─ = Branch
+  └─ = End
+
+═══════════════════════════════════════════════════════════════════════════════════════
